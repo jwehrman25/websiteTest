@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 
-
 <head>
     <meta charset="utf-8" />
     <title>Spinning Robot Army</title>
@@ -11,7 +10,6 @@
         }
     </style>
 </head>
-
 
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -38,10 +36,8 @@
             varying vec3 vViewPosition;
 
             uniform vec3 directionalLightColor;
-            uniform vec3 pointLightColor;
             uniform vec3 ambientLightColor;
             uniform vec3 directionalLightPos;
-            uniform vec3 pointLightPos;
 
             void main() {
                 vec3 normal = normalize(vNormal);
@@ -51,13 +47,9 @@
                 vec3 lightDirection = normalize(directionalLightPos);
                 float diffDir = max(dot(normal, -lightDirection), 0.0);
 
-                // Point light
-                vec3 lightDirPoint = normalize(pointLightPos - vViewPosition);
-                float diffPoint = max(dot(normal, lightDirPoint), 0.0);
-
                 vec3 ambient = ambientLightColor;
-                vec3 diffuse = directionalLightColor * diffDir + pointLightColor * diffPoint;
-                vec3 color = (ambient * 0.1) + diffuse;
+                vec3 diffuse = directionalLightColor * diffDir;
+                vec3 color = (ambient * 0.3) + diffuse;
 
                 gl_FragColor = vec4(color, 1.0);
             }
@@ -67,24 +59,19 @@
         camera.position.set(0, 5, -50);
         camera.lookAt(0, 5, 1);
 
-
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.body.appendChild(renderer.domElement);
 
-
         // Create an array to store robots
         const robots = [];
-
 
         const gridSize = 5;
         const spacing = 5;
 
-
         // Calculate the total width and height of the grid
         const totalWidth = (gridSize) * spacing;
         const totalHeight = (gridSize) * spacing;
-
 
         // Offset to center the grid
         const xOffset = -totalWidth / 2;
@@ -93,7 +80,6 @@
         const directionalLight = new THREE.DirectionalLight('white', 1.5);
         directionalLight.position.set(5, 10, 5);
         scene.add(directionalLight);
-
 
         const ambientLight = new THREE.AmbientLight('lightyellow', 0.5);
         scene.add(ambientLight);
@@ -106,65 +92,50 @@
                 robots.push(robot);
             }
         }
-
         directionalLight.target = robots[0].children[0]; // Assuming the first robot has a cube as a child
-
 
         const ground = createGround();
         scene.add(ground);
 
-
-
         document.addEventListener('mousedown', (event) => {
             previousMousePosition = { x: event.clientX, y: event.clientY };
         });
-
 
         document.addEventListener('mousemove', (event) => {
             if (event.buttons === 1) {
                 const deltaX = event.clientX - previousMousePosition.x;
                 const deltaY = event.clientY - previousMousePosition.y;
 
-
                 const sensitivity = 0.005;
                 //camera.rotation.x = camera.rotation.x + (deltaY * sensitivity);
                 camera.rotation.y = camera.rotation.y + (deltaX * sensitivity);
-
 
                 previousMousePosition = { x: event.clientX, y: event.clientY };
             }
         });
 
-
         const animate = function () {
             requestAnimationFrame(animate);
 
-
             // Animate each robot
             robots.forEach(animateRobot);
-
 
             camera.translateX(velocity.x * 0.01);
             camera.translateY(velocity.y * 0.01);
             camera.translateZ(velocity.z * 0.01);
 
-
             renderer.render(scene, camera);
         };
-
 
         window.addEventListener('resize', () => {
             const newWidth = window.innerWidth;
             const newHeight = window.innerHeight;
 
-
             camera.aspect = newWidth / newHeight;
             camera.updateProjectionMatrix();
 
-
             renderer.setSize(newWidth, newHeight);
         });
-
 
         document.addEventListener('keydown', function (event) {
             switch (event.key) {
@@ -185,7 +156,6 @@
             }
         });
 
-
         document.addEventListener('keyup', function (event) {
             switch (event.key) {
                 case 'w':
@@ -204,33 +174,25 @@
         });
         animate();
 
-
         function createRobot(x = 0, y = 0, z = 0) {
             const robot = new THREE.Group();
+
             
 
-             // Point light
-            const pointLight = new THREE.PointLight(0xffffff, 0.1);
-            pointLight.position.set(0, 0, 0);
-
-
             const greyMaterial = new THREE.ShaderMaterial({
-            vertexShader: vertexShader,
-            fragmentShader: fragmentShader,
-            uniforms: {
-                directionalLightColor: { value: directionalLight.color },
-                pointLightColor: { value: pointLight.color },
-                ambientLightColor: { value: ambientLight.color },
-                directionalLightPos: { value: new THREE.Vector3(5, 10, 5) },
-                pointLightPos: { value: pointLight.position },
-            }
-        });
+                vertexShader: vertexShader,
+                fragmentShader: fragmentShader,
+                uniforms: {
+                    directionalLightColor: { value: directionalLight.color },
+                    ambientLightColor: { value: ambientLight.color },
+                    directionalLightPos: { value: directionalLight.position },
+                }
+            });
 
 
             const cubeGeometry = new THREE.BoxGeometry();
             const cube = new THREE.Mesh(cubeGeometry, greyMaterial);
             robot.add(cube);
-
 
             const cylinder = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 2, 32), greyMaterial);
             cylinder.position.y = -1.5;
@@ -247,37 +209,29 @@
             wheel.rotation.x = Math.PI / 2;
             robot.add(wheel);
 
-
             const lArmRoot = new THREE.Group();
             lArmRoot.position.z = 1.15;
             lArmRoot.position.y = -.6;
             robot.add(lArmRoot);
 
-
             const lArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.5, 0.3, 1), greyMaterial);
             lArm.position.y = -0.75
             lArmRoot.add(lArm);
-
 
             const rArmRoot = new THREE.Group();
             rArmRoot.position.z = -1.15;
             rArmRoot.position.y = -.6;
             robot.add(rArmRoot);
 
-
             const rArm = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.5, 0.3, 1), greyMaterial);
             rArm.position.y = -0.75
             rArmRoot.add(rArm);
 
-            
-            cube.add(pointLight);
             // Set position based on parameters
             robot.position.set(x, y, z);
 
-
             return robot;
         }
-
 
         function animateRobot(robot) {
             robot.rotateY(Math.sin(0.005));
@@ -288,21 +242,15 @@
             }
         }
 
-
         function createGround() {
             const greenMaterial = new THREE.MeshStandardMaterial({ color: 'green' });
             const ground = new THREE.Mesh(new THREE.PlaneGeometry(totalWidth + 20, totalHeight + 20), greenMaterial);
             ground.rotation.x = -Math.PI / 2;
             ground.position.y = -4;
 
-
             return ground;
         }
     </script>
 </body>
 
-
 </html>
-
-
-
